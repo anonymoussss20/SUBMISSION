@@ -1,0 +1,312 @@
+### data process
+```{r}
+library(tidyverse)
+library(survival)
+library(regclass)
+library(car)
+
+
+data_project_outcome = read_csv('./data/woc_activity_2020_Python.csv')
+
+data_pair_outcome = read_csv('./data/atypical_combination_2020_Python.csv')
+data_star = read_csv('./data/star_2020_Python.csv')
+
+data_merge = merge(data_pair_outcome, data_project_outcome , by = 'woc')
+data_merge = merge(data_merge, data_star, by = 'woc')
+data_merge$earliestcommit = as.factor(data_merge$earliest_commit_year)
+data_project_download = read_csv('./data/download_2020_Python.csv')
+
+data_merge_has_download = merge(data_merge, data_project_download, by = 'woc')
+
+
+data_merge_five_year = subset(data_merge, project_age >= 365 * 5)
+data_merge_three_year = subset(data_merge, project_age >= 365 * 3)
+data_merge_one_year = subset(data_merge, project_age >= 365 * 1)
+data_merge_has_download_one_year_valid = subset(data_merge_has_download, project_age >= 365 & earliest_commit_year_month >= '2018-08')
+pk_threshold = 1
+
+
+data_merge_five_year_no_outlier = subset(data_merge_five_year, project_age < exp(9)
+                                                                          & star_within_5_year < exp(9)
+                                                                          &  all_commit_within_5_year_count < exp(10)
+                                                                          & all_commit_within_5_year_count > exp(2)
+                                                                          & all_dev_within_5_year_count < exp(6)
+                                                                          & identified_pk_within_5_year < exp(5)
+                                                                          & mean_pair_pk_conventionality_within_5_year < 4 
+                                                                          & mean_pair_pk_conventionality_within_5_year > -2
+                                                                          & identified_pk_within_5_year > pk_threshold)
+
+
+data_merge_five_year_no_outlier$mean_conventionality = data_merge_five_year_no_outlier$mean_pair_pk_conventionality_within_5_year
+data_merge_five_year_no_outlier$package_imported = data_merge_five_year_no_outlier$identified_pk_within_5_year
+data_merge_five_year_no_outlier$commit_count = data_merge_five_year_no_outlier$all_commit_within_5_year_count
+data_merge_five_year_no_outlier$star_count = data_merge_five_year_no_outlier$star_within_5_year
+data_merge_five_year_no_outlier$dev_count = data_merge_five_year_no_outlier$all_dev_within_5_year_count
+data_merge_five_year_no_outlier$owned_repo_count = data_merge_five_year_no_outlier$owner_owned_repo_count_5_year
+data_merge_five_year_no_outlier$exclude_top_commit = data_merge_five_year_no_outlier$commit_exclude_top_author_within_5_year
+
+
+data_merge_three_year_no_outlier = subset(data_merge_three_year, project_age < exp(9)
+                                                                          & star_within_3_year < exp(9)
+                                                                          & all_commit_within_3_year_count < exp(10)
+                                                                          & all_commit_within_3_year_count > exp(2)
+                                                                          & all_dev_within_3_year_count < exp(6)
+                                                                          & identified_pk_within_3_year < exp(5)
+                                                                          & mean_pair_pk_conventionality_within_3_year > -2
+                                                                          & identified_pk_within_3_year > pk_threshold)
+data_merge_three_year_no_outlier$mean_conventionality = data_merge_three_year_no_outlier$mean_pair_pk_conventionality_within_3_year
+data_merge_three_year_no_outlier$package_imported = data_merge_three_year_no_outlier$identified_pk_within_3_year
+data_merge_three_year_no_outlier$commit_count = data_merge_three_year_no_outlier$all_commit_within_3_year_count
+data_merge_three_year_no_outlier$star_count = data_merge_three_year_no_outlier$star_within_3_year
+data_merge_three_year_no_outlier$dev_count = data_merge_three_year_no_outlier$all_dev_within_3_year_count
+data_merge_three_year_no_outlier$owned_repo_count = data_merge_three_year_no_outlier$owner_owned_repo_count_3_year
+data_merge_three_year_no_outlier$exclude_top_commit = data_merge_three_year_no_outlier$commit_exclude_top_author_within_3_year
+
+
+data_merge_one_year_no_outlier = subset(data_merge_one_year, project_age < exp(9)
+                                                                          & star_within_1_year < exp(8)
+                                                                          &  all_commit_within_1_year_count < exp(9)
+                                                                          & all_commit_within_1_year_count > exp(1)
+                                                                          & all_dev_within_1_year_count < exp(4)
+                                                                          & identified_pk_within_1_year < exp(4)
+                                                                          & mean_pair_pk_conventionality_within_1_year > -2
+                                                                          & identified_pk_within_1_year > pk_threshold)
+
+
+data_merge_one_year_no_outlier$mean_conventionality = data_merge_one_year_no_outlier$mean_pair_pk_conventionality_within_1_year
+data_merge_one_year_no_outlier$package_imported = data_merge_one_year_no_outlier$identified_pk_within_1_year
+data_merge_one_year_no_outlier$commit_count = data_merge_one_year_no_outlier$all_commit_within_1_year_count
+data_merge_one_year_no_outlier$star_count = data_merge_one_year_no_outlier$star_within_1_year
+data_merge_one_year_no_outlier$dev_count = data_merge_one_year_no_outlier$all_dev_within_1_year_count
+data_merge_one_year_no_outlier$owned_repo_count = data_merge_one_year_no_outlier$owner_owned_repo_count_1_year
+data_merge_one_year_no_outlier$exclude_top_commit = data_merge_one_year_no_outlier$commit_exclude_top_author_within_1_year
+
+
+
+data_merge_has_download_valid_no_outlier = subset(data_merge_has_download_one_year_valid, 
+                                                                          star_within_1_year < exp(8)
+                                                                        & all_commit_within_1_year_count < exp(8)
+                                                                        & all_dev_within_1_year_count < exp(3.5)
+                                                                        & identified_pk_within_1_year < exp(3.5)
+                                                                          & download_within_1_year < exp(15)
+                                                                        & identified_pk_within_1_year > pk_threshold)
+
+
+
+data_merge_has_download_valid_no_outlier$mean_conventionality = data_merge_has_download_valid_no_outlier$mean_pair_pk_conventionality_within_1_year
+data_merge_has_download_valid_no_outlier$package_imported = data_merge_has_download_valid_no_outlier$identified_pk_within_1_year
+data_merge_has_download_valid_no_outlier$commit_count = data_merge_has_download_valid_no_outlier$all_commit_within_1_year_count
+data_merge_has_download_valid_no_outlier$star_count = data_merge_has_download_valid_no_outlier$star_within_1_year
+data_merge_has_download_valid_no_outlier$dev_count = data_merge_has_download_valid_no_outlier$all_dev_within_1_year_count
+data_merge_has_download_valid_no_outlier$owned_repo_count = data_merge_has_download_valid_no_outlier$owner_owned_repo_count_1_year
+
+
+
+```
+
+
+### regression analysis
+```{r}
+
+model_star_five_year = lm(log(star_count + 1)~
+                                            + log(commit_count + 1)
+                                            + log(package_imported + 1)
+                        
+                        
+                                            + log(dev_count + 1)
+                                            + as.logical(owned_by_org_flag)
+                                            + log(owned_repo_count + 1)
+                                            + scale(mean_conventionality)
+
+                                            + earliestcommit
+
+                        ,data = data_merge_five_year_no_outlier)
+vif(model_star_five_year)
+summary(model_star_five_year)
+
+
+
+model_star_three_year = lm(log(star_count + 1)~
+                                            + log(commit_count + 1)
+                                            + log(package_imported + 1)
+                        
+                        
+                                            + log(dev_count + 1)
+                                            + as.logical(owned_by_org_flag)
+                                            + log(owned_repo_count + 1)
+                                            + scale(mean_conventionality)
+
+                                            + earliestcommit
+                        ,data = data_merge_three_year_no_outlier)
+vif(model_star_three_year)
+summary(model_star_three_year)
+
+
+model_star_one_year = lm(log(star_count + 1)~
+                                            + log(commit_count + 1)
+                                            + log(package_imported + 1)
+                        
+                        
+                                            + log(dev_count + 1)
+                                            + as.logical(owned_by_org_flag)
+                                            + log(owned_repo_count + 1)
+                                            + scale(mean_conventionality)
+
+                                            + earliestcommit
+                        ,data = data_merge_one_year_no_outlier)
+vif(model_star_one_year)
+summary(model_star_one_year)
+
+
+
+
+
+model_download_one_year = lm(log(download_within_1_year + 1)~
+                                            + log(commit_count + 1)
+                                            + log(package_imported + 1)
+                        
+                        
+                                            + log(star_count + 1)
+                                            + log(dev_count + 1)
+                                            + as.logical(owned_by_org_flag)
+                                            + log(owned_repo_count + 1)
+                                            + scale(mean_conventionality)
+
+                        ,data = data_merge_has_download_valid_no_outlier)
+vif(model_download_one_year)
+summary(model_download_one_year)
+
+
+
+
+
+
+model_dev_five_year = lm(log(dev_count + 1)~
+                                            + log(commit_count + 1)
+                                            + log(package_imported + 1)
+                         
+                         
+                                            + log(star_count + 1)
+                                            + as.logical(owned_by_org_flag)
+                                            + log(owned_repo_count + 1)
+                                            + scale(mean_conventionality)
+                                            + earliestcommit
+
+                        ,data = data_merge_five_year_no_outlier)
+vif(model_dev_five_year)
+summary(model_dev_five_year)
+
+
+model_dev_three_year = lm(log(dev_count + 1)~
+                                            + log(commit_count + 1)
+                                            + log(package_imported + 1)
+                          
+                                            + log(star_count + 1)
+                                            + as.logical(owned_by_org_flag)
+                                            + log(owned_repo_count + 1)
+                                            + scale(mean_conventionality)
+
+                                            + earliestcommit
+
+                        ,data = data_merge_three_year_no_outlier)
+vif(model_dev_three_year)
+summary(model_dev_three_year)
+
+
+model_dev_one_year = lm(log(dev_count + 1)~
+                                            + log(commit_count + 1)
+                                            + log(package_imported + 1)
+                        
+                        
+                                            + log(star_count + 1)
+                                            + as.logical(owned_by_org_flag)
+                                            + log(owned_repo_count + 1)
+                                            + scale(mean_conventionality)
+
+                                            + earliestcommit
+                        
+                        ,data = data_merge_one_year_no_outlier)
+vif(model_dev_one_year)
+summary(model_dev_one_year)
+
+
+
+
+
+
+
+
+```
+
+### generate table 3 in the paper
+```{r}
+library(stargazer)
+
+
+stargazer(model_star_five_year, model_download_one_year, model_dev_five_year, omit = c('Constant', 'earliestcommit'), digits = 2, omit.stat = c('ser', 'll', 'aic', 'bic'), single.row = TRUE, star.cutoffs = c(.05, .01, .001), star.char = c("*", "**", "***"),  covariate.labels = c('Commit count (log)', 'Package imported (log)', 'Star count (log)', 'Developer count (log)', 'Is owned by organization', 'Owner influence (log)', 'Conventionality (scaled)'))
+
+
+```
+
+### survival analysis data process
+```{r}
+
+library(tidyverse)
+library(survival)
+library(regclass)
+library(car)
+
+year_version = '2020' # 2020 or 2018
+data_project_outcome_sa = read_csv(sprintf('./data/woc_activity_%s_Python.csv',year_version))
+
+data_pair_outcome_sa = read_csv(sprintf('./data/atypical_combination_%s_Python.csv', year_version))
+data_star_sa = read_csv(sprintf('./data/star_%s_Python.csv', year_version))
+data_merge_sa = merge(data_pair_outcome_sa, data_project_outcome_sa , by = 'woc')
+data_merge_sa = merge(data_merge_sa, data_star_sa, by = 'woc')
+data_merge_sa$earliestcommit = as.factor(data_merge_sa$earliest_commit_year)
+pk_threshold = 1
+data_merge_active = subset(data_merge_sa, recent_past_commit_count > 0 & identified_pk_count > pk_threshold
+                                        & owner_owned_repo_count_before < exp(8)
+                                        & project_age < exp(9)
+                                        & project_age > exp(2)
+                                        & all_dev_alltime_count < exp(6)
+                                        & all_past_commit_count < exp(10)
+                                        & star_before_count < exp(9))
+
+data_merge_active$mean_conventionality = data_merge_active$mean_pair_pk_conventionality
+
+
+```
+
+
+### survival analysis model
+```{r}
+
+suv_model <- coxph(Surv(survival_time, censor_status) ~  
+                                                        
+                                                        + log(all_dev_alltime_count + 1)
+                                                        + log(all_dev_recent_count + 1)
+                                                        + log(all_past_commit_count + 1)
+                                                        + log(recent_past_commit_count + 1)
+                                                        + log(identified_pk_count + 1)
+
+                                                        + log(star_before_count + 1)
+                                                        + owned_by_org_flag
+                                                        + log(owner_owned_repo_count_before + 1)
+                                                        + scale(mean_conventionality)
+                                                        + as.factor(earliest_commit_year)
+                      , data=data_merge_active)
+vif(suv_model)
+summary(suv_model)
+
+```
+
+### generate table 4 iin the paper
+```{r}
+library(stargazer)
+
+
+stargazer(suv_model, suv_model, digits = 2, omit = 'earliest_commit_year', omit.stat = c('ser', 'll', 'aic', 'bic'), single.row = TRUE, star.cutoffs = c(.05, .01, .001), star.char = c("*", "**", "***"), covariate.labels = c('Developer count (log)', 'Developer count (recent, log)', 'Commit count(log)', 'Commit count (recent, log)', 'Package imported (log)', 'Star count (log)', 'Is owned by organization', 'Owner influence (log)', 'Conventionality (scaled)'))
+
+
+```
